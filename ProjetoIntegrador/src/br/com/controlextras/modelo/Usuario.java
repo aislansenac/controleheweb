@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public abstract class Usuario {
     private int id;
-    private String senha;
+    protected String senha;
     private String nome;
     private LocalDate dataNascimento;
     private String cpf;
