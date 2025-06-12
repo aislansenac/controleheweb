@@ -17,7 +17,7 @@ public class Conexao {
         }
     }
 
-    public Connection getConexao() {
+    public static Connection getConexao() {
     try {
             return DriverManager.getConnection(URL, USER, PASSWORD);
         }catch(SQLException e) {
