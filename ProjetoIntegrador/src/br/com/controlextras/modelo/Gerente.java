@@ -10,7 +10,6 @@ public class Gerente extends Coordenador{
         this.setCpf(f.getCpf());
         this.setDataNascimento(f.getDataNascimento());
         this.setSalario(f.getSalario());
-        this.setSenha(f.getSenha());
         this.setCargo(f.getCargo());
         this.setAtivo(f.isAtivo());
     }
