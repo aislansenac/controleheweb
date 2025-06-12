@@ -10,150 +10,133 @@ import java.sql.Time;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-
-import java.time.LocalTime;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class HoraExtraDAO {
-    private Connection conn;
-    private Conexao conexao;
+    // Constantes para as queries SQL
+    private static final String SQL_INSERIR_HE = 
+        "INSERT INTO horas_extras(criador_id, data, hora_inicio, hora_fim, observacao) VALUES (?, ?, ?, ?, ?)";
+    private static final String SQL_DELETAR_HE = 
+        "DELETE FROM horas_extras WHERE id = ?";
+    private static final String SQL_INSCREVER_HE = 
+        "UPDATE horas_extras SET inscrito=? WHERE id = ?";
+    private static final String SQL_APROVAR_HE = 
+        "UPDATE horas_extras SET aprovada=?, verificada=? WHERE id = ?";
+    private static final String SQL_BUSCAR_TODAS_HE = 
+        "SELECT * FROM horas_extras";
+    private static final String SQL_BUSCAR_HE_ID = 
+        "SELECT * FROM horas_extras WHERE id=?";
 
-    public HoraExtraDAO() {
-        this.conexao = new Conexao();
-        this.conn = conexao.getConexao();
-    }
-    
     public void inserir(HoraExtra he) {
-        String sql = "INSERT INTO horas_extras(criador_id, data, hora_inicio, hora_fim, observacao) VALUE (?, ?, ?, ?, ?)";
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(SQL_INSERIR_HE)) {
 
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, he.getCriador().getId());
-            Date sqlDate = Date.valueOf(he.getData());
-            stmt.setDate(2, sqlDate);
-            Time sqlTimeInicio = Time.valueOf(he.getHoraInicio());
-            stmt.setTime(3, sqlTimeInicio);
-            Time sqlTimeTermino = Time.valueOf(he.getHoraFim());
-            stmt.setTime(4, sqlTimeTermino);
+            stmt.setDate(2, Date.valueOf(he.getData()));
+            stmt.setTime(3, Time.valueOf(he.getHoraInicio()));
+            stmt.setTime(4, Time.valueOf(he.getHoraFim()));
             stmt.setString(5, he.getObservacao());
             stmt.execute();
-        }catch(SQLException e){
+
+        } catch (SQLException e) {
             System.out.println("Erro ao inserir hora extra: " + e.getMessage());
         }
     }
-    
+
     public void deletar(int id) {
-        String sql = "DELETE FROM horas_extras WHERE id = ?";
-        
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(SQL_DELETAR_HE)) {
             stmt.setInt(1, id);
-            
             stmt.execute();
-        }catch(SQLException e){
+        } catch (SQLException e) {
             System.out.println("Erro ao deletar hora extra: " + e.getMessage());
         }
     }
-    
+
     public void inscrever(int id) {
-        String sql = "UPDATE horas_extras SET inscrito=? WHERE id = ?";
-        
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(SQL_INSCREVER_HE)) {
             stmt.setBoolean(1, true);
             stmt.setInt(2, id);
-            
             stmt.execute();
-        }catch(SQLException e){
+        } catch (SQLException e) {
             System.out.println("Erro ao inscrever hora extra: " + e.getMessage());
         }
     }
-    
-    public void aprovar(boolean resp, int idHe){
-        String sql = "UPDATE horas_extras SET aprovada=?, verificada=? WHERE id = ?";
-        
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql); 
+
+    public void aprovar(boolean resp, int idHe) {
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(SQL_APROVAR_HE)) {
             stmt.setBoolean(1, resp);
             stmt.setBoolean(2, true);
             stmt.setInt(3, idHe);
             stmt.execute();
-        }catch(SQLException e){
+        } catch (SQLException e) {
             System.out.println("Erro ao aprovar hora extra: " + e.getMessage());
         }
     }
+
     public Map<Integer, HoraExtra> getHoraExtra() {
-        String sql = "SELECT * FROM horas_extras";
         Map<Integer, HoraExtra> listaHoraExtra = new HashMap<>();
-        
-        try {
-            PreparedStatement stmt = this.conn.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery();            
             
-            while (rs.next()) { 
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(SQL_BUSCAR_TODAS_HE);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
                 HoraExtra he = new HoraExtra();
                 he.setId(rs.getInt("id"));
+
                 Funcionario func = new Funcionario();
                 func.setId(rs.getInt("criador_id"));
                 he.setCriador(func);
-                
-                LocalDate localDate = rs.getDate("data").toLocalDate();
-                he.setData(localDate);
-                
-                LocalTime localTimeInicio = rs.getTime("hora_inicio").toLocalTime();
-                he.setHoraInicio(localTimeInicio);
-                
-                LocalTime localTimeFim = rs.getTime("hora_fim").toLocalTime();
-                he.setHoraFim(localTimeFim);
+
+                he.setData(rs.getDate("data").toLocalDate());
+                he.setHoraInicio(rs.getTime("hora_inicio").toLocalTime());
+                he.setHoraFim(rs.getTime("hora_fim").toLocalTime());
                 he.setObservacao(rs.getString("observacao"));
-                
+
                 he.setAprovada(rs.getBoolean("aprovada"));
                 he.setInscrito(rs.getBoolean("inscrito"));
                 he.setVerificada(rs.getBoolean("verificada"));
+
                 listaHoraExtra.put(he.getId(), he);
             }
-            return listaHoraExtra;
-                    
         } catch (SQLException e) {
-            return null;
+            System.out.println("Erro ao buscar lista de horas extras: " + e.getMessage());
         }
+
+        return listaHoraExtra;
     }
-    
+
     public HoraExtra getHoraExtra(int id) {
-        String sql = "SELECT * FROM horas_extras WHERE id=?";
-        HoraExtra he = new HoraExtra();
-        
-        try {
-            PreparedStatement stmt = this.conn.prepareStatement(sql);
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(SQL_BUSCAR_HE_ID)) {
             stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();            
-            
-            if(rs.next()) { 
-                he.setId(rs.getInt("id"));
-                Funcionario func = new Funcionario();
-                func.setId(rs.getInt("criador_id"));
-                he.setCriador(func);
-                
-                LocalDate localDate = rs.getDate("data").toLocalDate();
-                he.setData(localDate);
-                
-                LocalTime localTimeInicio = rs.getTime("hora_inicio").toLocalTime();
-                he.setHoraInicio(localTimeInicio);
-                
-                LocalTime localTimeFim = rs.getTime("hora_fim").toLocalTime();
-                he.setHoraFim(localTimeFim);
-                he.setObservacao(rs.getString("observacao"));
-                he.setVerificada(rs.getBoolean("verificada"));
-                he.setAprovada(rs.getBoolean("aprovada"));
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    HoraExtra he = new HoraExtra();
+                    he.setId(rs.getInt("id"));
+
+                    Funcionario func = new Funcionario();
+                    func.setId(rs.getInt("criador_id"));
+                    he.setCriador(func);
+
+                    he.setData(rs.getDate("data").toLocalDate());
+                    he.setHoraInicio(rs.getTime("hora_inicio").toLocalTime());
+                    he.setHoraFim(rs.getTime("hora_fim").toLocalTime());
+                    he.setObservacao(rs.getString("observacao"));
+
+                    he.setVerificada(rs.getBoolean("verificada"));
+                    he.setAprovada(rs.getBoolean("aprovada"));
+
+                    return he;
+                }
             }
-            return he;
-                    
         } catch (SQLException e) {
-            return null;
+            System.out.println("Erro ao buscar hora extra por ID: " + e.getMessage());
         }
+        return null;
     }
-    
 }
