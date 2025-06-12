@@ -10,118 +10,116 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class FuncHoraExtraDAO {
-    private Connection conn;
-    private Conexao conexao;
 
-    
-    public FuncHoraExtraDAO() {
-        this.conexao = new Conexao();
-        this.conn = conexao.getConexao();
-    }
-    
     public void inserir(FuncHoraExtra funcHe) {
         String sql = "INSERT INTO funcionarios_horaextras(funcionario_id, horaextra_id) VALUES (?, ?)";
-        
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
+
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setInt(1, funcHe.getFuncId());
             stmt.setInt(2, funcHe.getHeId());
             stmt.execute();
-        }catch(SQLException e){
+
+        } catch (SQLException e) {
             System.out.println("Erro ao inserir Funcionario_HoraExtra: " + e.getMessage());
         }
     }
-    
+
     public List<FuncHoraExtra> getFuncHoraExtraIdFunc(int idFunc) {
         String sql = "SELECT * FROM funcionarios_horaextras WHERE funcionario_id=?";
-        
         List<FuncHoraExtra> listaHe = new ArrayList<>();
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, idFunc);
-            ResultSet rs = stmt.executeQuery();
-                
-            while(rs.next()) {
-                FuncHoraExtra funcHe = new FuncHoraExtra();
-                
-                funcHe.setId(rs.getInt("id"));
-                funcHe.setHeId(rs.getInt("horaextra_id"));
-                funcHe.setFuncId(idFunc);
 
-                listaHe.add(funcHe);
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idFunc);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    FuncHoraExtra funcHe = new FuncHoraExtra();
+                    funcHe.setId(rs.getInt("id"));
+                    funcHe.setHeId(rs.getInt("horaextra_id"));
+                    funcHe.setFuncId(idFunc);
+                    listaHe.add(funcHe);
+                }
             }
-            return listaHe;
-        }catch(SQLException e){
-            System.out.println("Erro ao inserir Funcionario_HoraExtra: " + e.getMessage());
-            return null;
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar Funcionario_HoraExtra por funcionario_id: " + e.getMessage());
         }
+
+        return listaHe;
     }
-    
+
     public FuncHoraExtra getFuncHoraExtraIdHoraExtra(int idHe) {
         String sql = "SELECT * FROM funcionarios_horaextras WHERE horaextra_id=?";
-        
-        FuncHoraExtra funcHe = new FuncHoraExtra();
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, idHe);
-            ResultSet rs = stmt.executeQuery();
-                
-            if(rs.next()) {
+        FuncHoraExtra funcHe = null;
 
-                funcHe.setId(rs.getInt("id"));
-                funcHe.setHeId(rs.getInt("horaextra_id"));
-                funcHe.setFuncId(rs.getInt("funcionario_id"));
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idHe);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    funcHe = new FuncHoraExtra();
+                    funcHe.setId(rs.getInt("id"));
+                    funcHe.setHeId(rs.getInt("horaextra_id"));
+                    funcHe.setFuncId(rs.getInt("funcionario_id"));
+                }
             }
-            return funcHe;
-        }catch(SQLException e){
-            System.out.println("Erro ao pegar Func pelo id Funcionario_HoraExtra: " + e.getMessage());
-            return null;
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar Funcionario_HoraExtra por horaextra_id: " + e.getMessage());
         }
+
+        return funcHe;
     }
-    
+
     public List<FuncHoraExtra> getFuncHoraExtra() {
         String sql = "SELECT * FROM funcionarios_horaextras";
-        
         List<FuncHoraExtra> listaHe = new ArrayList<>();
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            ResultSet rs = stmt.executeQuery();
 
-            while(rs.next()) {
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
                 FuncHoraExtra funcHe = new FuncHoraExtra();
-                funcHe.setFuncId(rs.getInt("funcionario_id"));
                 funcHe.setId(rs.getInt("id"));
+                funcHe.setFuncId(rs.getInt("funcionario_id"));
                 funcHe.setHeId(rs.getInt("horaextra_id"));
                 listaHe.add(funcHe);
             }
-            return listaHe;
-        }catch(SQLException e){
-            System.out.println("Erro ao inserir Funcionario_HoraExtra: " + e.getMessage());
-            return null;
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao listar Funcionarios_HoraExtras: " + e.getMessage());
         }
-    }
-    
-    public FuncHoraExtra getFuncHoraExtra(int id) {
-        String sql = "SELECT * FROM funcionarios_horaextras WHERE id=?";
-       
-        try{
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            FuncHoraExtra funcHe = new FuncHoraExtra();
-            if(rs.next()) {
-                
-                funcHe.setFuncId(rs.getInt("funcionario_id"));
-                funcHe.setId(rs.getInt("id"));
-                funcHe.setHeId(rs.getInt("horaextra_id"));
-            }
-            return funcHe;
-        }catch(SQLException e){
-            System.out.println("Erro ao inserir Funcionario_HoraExtra: " + e.getMessage());
-            return null;
-        }
+
+        return listaHe;
     }
 
+    public FuncHoraExtra getFuncHoraExtra(int id) {
+        String sql = "SELECT * FROM funcionarios_horaextras WHERE id=?";
+        FuncHoraExtra funcHe = null;
+
+        try (Connection conn = Conexao.getConexao();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    funcHe = new FuncHoraExtra();
+                    funcHe.setId(rs.getInt("id"));
+                    funcHe.setFuncId(rs.getInt("funcionario_id"));
+                    funcHe.setHeId(rs.getInt("horaextra_id"));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Erro ao buscar Funcionario_HoraExtra por id: " + e.getMessage());
+        }
+
+        return funcHe;
+    }
 }
