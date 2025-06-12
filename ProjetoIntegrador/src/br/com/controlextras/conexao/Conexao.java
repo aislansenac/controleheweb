@@ -5,16 +5,23 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Conexao {
-    private Connection con;
+    private static final String URL = "jdbc:mysql://localhost/pi_bd_aislan_penha";
+    private static final String USER = "root";
+    private static final String PASSWORD = "ap100267";
     
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver"); // carrega driver uma vez só
+        } catch (ClassNotFoundException ex) {
+            System.err.println("Driver não encontrado: " + ex.getMessage());
+        }
+    }
+
     public Connection getConexao() {
-     try{
-         Class.forName("com.mysql.cj.jdbc.Driver"); 
-         con = DriverManager.getConnection("jdbc:mysql://localhost/pi_bd_aislan_penha", "root", "ap100267");
-         return con;
-     }catch(ClassNotFoundException | SQLException ex){
-         System.out.println(ex.getMessage());
-         return null;
-     }
+    try {
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        }catch(SQLException e) {
+            return null;
+        }
     }
 }
